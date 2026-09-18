@@ -101,12 +101,12 @@ public class Config {
               Config::isValidAttributeBonus);
       builder.pop();
       builder.push("default_leveling_settings");
-      defaultStartingLevel = builder.define("starting_level", 1, positiveInteger);
-      defaultMaxLevel = builder.define("max_level", 0, positiveOrZeroInteger);
-      defaultLevelsPerDistance = builder.define("levels_per_distance", 0.01D, positiveDouble);
-      defaultLevelsPerDeepness = builder.define("levels_per_deepness", 0D, positiveOrZeroDouble);
-      defaultRandomLevelBonus = builder.define("random_level_bonus", 0, positiveOrZeroInteger);
-      defaultLevelsPerDay = builder.define("levels_per_day", 0D, positiveOrZeroDouble);
+    defaultStartingLevel = builder.define("starting_level", 0, positiveOrZeroInteger);
+    defaultMaxLevel = builder.define("max_level", 100, positiveOrZeroInteger);
+    defaultLevelsPerDistance = builder.define("levels_per_distance", 500D, positiveDouble);
+    defaultLevelsPerDeepness = builder.define("levels_per_deepness", 0D, positiveOrZeroDouble);
+    defaultRandomLevelBonus = builder.define("random_level_bonus", 5, positiveOrZeroInteger);
+    defaultLevelsPerDay = builder.define("levels_per_day", 0.2D, positiveOrZeroDouble);
       defaultLevelPowerPerDistance =
           builder.define("level_power_per_distance", 0D, positiveOrZeroDouble);
       defaultLevelPowerPerDeepness =
