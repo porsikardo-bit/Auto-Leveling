@@ -17,6 +17,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier.Operation;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -24,6 +25,7 @@ import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import daripher.autoleveling.reloader.DimensionsLevelingSettingsReloader;
 import daripher.autoleveling.reloader.EntitiesLevelingSettingsReloader;
 import net.minecraft.network.chat.Component;
+import net.minecraft.core.BlockPos;
 import java.util.UUID;
 
 @EventBusSubscriber(modid = "autoleveling")
@@ -48,14 +50,14 @@ public class MobsLevelingEvents {
     }
 
     private static boolean shouldSetLevel(Entity entity) {
-        if (entity.level().isClientSide) return false;
+        if (entity.level.isClientSide) return false;
         return canHaveLevel(entity);
     }
 
     private static boolean canHaveLevel(Entity entity) {
         LevelingSettings settings = EntitiesLevelingSettingsReloader.getSettingsForEntity(entity.getType());
         if (settings != null) return !settings.ignored();
-        ResourceKey<Level> dimension = entity.level().dimension();
+        ResourceKey<Level> dimension = entity.level.dimension();
         settings = DimensionsLevelingSettingsReloader.getSettingsForDimension(dimension);
         return settings != null && !settings.ignored();
     }
@@ -81,7 +83,7 @@ public class MobsLevelingEvents {
         if (server == null) return 0;
         LevelingSettings levelingSettings = EntitiesLevelingSettingsReloader.getSettingsForEntity(entity.getType());
         if (levelingSettings == null) {
-            ResourceKey<Level> dimension = entity.level().dimension();
+            ResourceKey<Level> dimension = entity.level.dimension();
             levelingSettings = DimensionsLevelingSettingsReloader.getSettingsForDimension(dimension);
         }
         
@@ -111,7 +113,7 @@ public class MobsLevelingEvents {
         });
 
         // --- SISTEMA DEL DÍA 3 (Frenar el tiempo los días 1 y 2) ---
-        long gameTime = entity.level().getGameTime();
+        long gameTime = entity.level.getGameTime();
         long daysPassed = gameTime / 24000;
         int levelFromTime = 0;
         
@@ -124,7 +126,7 @@ public class MobsLevelingEvents {
 
         // Aplicamos multiplicadores extras del autor base
         monsterlevel = Math.abs(monsterlevel);
-        monsterlevel += WorldLevelingData.get((ServerLevel) entity.level()).getLevelBonus();
+        monsterlevel += WorldLevelingData.get((ServerLevel) entity.level).getLevelBonus();
         
         GlobalLevelingData globalLevelingData = GlobalLevelingData.get(server);
         monsterlevel += globalLevelingData.getLevelBonus();
