@@ -1,0 +1,32 @@
+name: Compilador Automatico Project-K32
+
+on:
+  push:
+    branches: [ "1.19.2" ]
+  pull_request:
+    branches: [ "1.19.2" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar Codigo Fuente
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Dar Permisos de Ejecucion a Gradle
+        run: chmod +x gradlew
+
+      - name: Compilar Archivo Jar Modificado
+        run: ./gradlew build
+
+      - name: Guardar Mod Listo (Artifact)
+        uses: actions/upload-artifact@v4
+        with:
+          name: AutoLeveling-1.20.1-v1.3-K32
+          path: build/libs/*.jar
