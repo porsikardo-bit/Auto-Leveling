@@ -196,12 +196,12 @@ public class MobsLevelingEvents {
     return canHaveLevel(entity);
   }
 
-          private static int createLevelForEntity(LivingEntity entity, double distance) {
+    private static int createLevelForEntity(LivingEntity entity, double distance) {
         MinecraftServer server = entity.getServer();
         if (server == null) return 0;
         LevelingSettings levelingSettings = EntitiesLevelingSettingsReloader.getSettingsForEntity(entity.getType());
         if (levelingSettings == null) {
-            ResourceKey<Level> dimension = entity.level().dimension();
+            ResourceKey<Level> dimension = entity.level.dimension();
             levelingSettings = DimensionsLevelingSettingsReloader.getSettingsForDimension(dimension);
         }
         
@@ -230,37 +230,30 @@ public class MobsLevelingEvents {
             }
         });
 
-// --- SISTEMA DEL DÍA 3 (Frenar el tiempo los días 1 y 2) ---
-long gameTime = entity.level().getGameTime();
-long daysPassed = gameTime / 24000;
-int levelFromTime = 0;
-
-if (daysPassed >= 3) {
-    levelFromTime = (int) ((daysPassed - 3) * levelingSettings.levelsPerDay());
-
-    // Alerta cinematográfica en pantalla al iniciar el Día 3
-    server.getPlayerList().getPlayers().forEach(serverPlayer -> {
-        if (daysPassed == 3 && gameTime % 24000 < 100) {
-            server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), 
-                "title " + serverPlayer.getGameProfile().getName() + " title {\"text\":\"EL MUNDO SE HACE MÁS DIFÍCIL\",\"bold\":true,\"color\":\"dark_red\"}");
-            server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), 
-                "playsound minecraft:entity.wither.spawn ambient " + serverPlayer.getGameProfile().getName() + " ~ ~ ~ 1 0.5");
-        }
-    });
-}
+        // --- SISTEMA DEL DÍA 3 (Frenar el tiempo los días 1 y 2) ---
+        long gameTime = entity.level.getGameTime();
+        long daysPassed = gameTime / 24000;
+        int levelFromTime = 0;
+        
+        if (daysPassed >= 3) {
+            levelFromTime = (int) ((daysPassed - 3) * levelingSettings.levelsPerDay());
+            
+            // Alerta cinematográfica en pantalla al iniciar el Día 3
+            server.getPlayerList().getPlayers().forEach(serverPlayer -> {
+                if (daysPassed == 3 && gameTime % 24000  0) monsterlevel += entity.getRandom().nextInt(levelBonus);
 
         // Aplicamos multiplicadores extras del autor base
-        monsterLevel = Math.abs(monsterLevel);
-        monsterLevel += WorldLevelingData.get((ServerLevel) entity.level()).getLevelBonus();
+        monsterlevel = Math.abs(monsterlevel);
+        monsterlevel += WorldLevelingData.get((ServerLevel) entity.level).getLevelBonus();
         
         GlobalLevelingData globalLevelingData = GlobalLevelingData.get(server);
-        monsterLevel += globalLevelingData.getLevelBonus();
+        monsterlevel += globalLevelingData.getLevelBonus();
 
         // --- EL TOPE DEFINITIVO (Límite absoluto de 100 niveles) ---
         int maxLevel = levelingSettings.maxLevel();
-        if (maxLevel > 0) monsterLevel = Math.min(monsterLevel, 100);
+        if (maxLevel > 0) monsterlevel = Math.min(monsterlevel, 100);
 
-        return monsterLevel;
+        return monsterlevel;
     }
 
   @SubscribeEvent
