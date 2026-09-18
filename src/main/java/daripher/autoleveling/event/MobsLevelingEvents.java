@@ -196,34 +196,72 @@ public class MobsLevelingEvents {
     return canHaveLevel(entity);
   }
 
-  private static int createLevelForEntity(LivingEntity entity, double distance) {
-    MinecraftServer server = entity.getServer();
-    if (server == null) return 0;
-    LevelingSettings levelingSettings =
-        EntitiesLevelingSettingsReloader.getSettingsForEntity(entity.getType());
-    if (levelingSettings == null) {
-      ResourceKey<Level> dimension = entity.level.dimension();
-      levelingSettings = DimensionsLevelingSettingsReloader.getSettingsForDimension(dimension);
+          private static int createLevelForEntity(LivingEntity entity, double distance) {
+        MinecraftServer server = entity.getServer();
+        if (server == null) return 0;
+        LevelingSettings levelingSettings = EntitiesLevelingSettingsReloader.getSettingsForEntity(entity.getType());
+        if (levelingSettings == null) {
+            ResourceKey<Level> dimension = entity.level().dimension();
+            levelingSettings = DimensionsLevelingSettingsReloader.getSettingsForDimension(dimension);
+        }
+        
+        // --- SISTEMA DE SECTORES INFINITOS (3 niveles cada 1,500 bloques) ---
+        int sector = (int) (distance / 1500);
+        int levelFromDistance = sector * 3;
+        
+        // --- DETECTOR DE ZONAS RPG CON TÍTULOS GIGANTES EN PANTALLA (Borde Superior) ---
+        server.getPlayerList().getPlayers().forEach(serverPlayer -> {
+            double pDist = Math.sqrt(serverPlayer.blockPosition().distSqr(server.getLevel(Level.OVERWORLD).getSharedSpawnPos()));
+            int playerSector = (int) (pDist / 1500);
+            
+            String tag = "last_sector_k32";
+            if (!serverPlayer.getPersistentData().contains(tag) || serverPlayer.getPersistentData().getInt(tag) != playerSector) {
+                serverPlayer.getPersistentData().putInt(tag, playerSector);
+                
+                // Comando para lanzar el título en la parte superior (Actionbar / Title con tiempos configurados)
+                server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), 
+                    "title " + serverPlayer.getGameProfile().getName() + " times 10 40 10");
+                server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), 
+                    "title " + serverPlayer.getGameProfile().getName() + " actionbar [\"\",{\"text\":\"  Has entrado a la \",\"color\":\"gold\"},{\"text\":\"ZONA " + playerSector + "\",\"bold\":true,\"color\":\"dark_red\"},{\"text\":\"  \",\"color\":\"gold\"}]");
+                
+                // Sonido épico de transición de zona (Estilo campana/logro)
+                server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), 
+                    "playsound minecraft:ui.toast.challenge_complete ambient " + serverPlayer.getGameProfile().getName() + " ~ ~ ~ 1 1");
+            }
+        });
+
+// --- SISTEMA DEL DÍA 3 (Frenar el tiempo los días 1 y 2) ---
+long gameTime = entity.level().getGameTime();
+long daysPassed = gameTime / 24000;
+int levelFromTime = 0;
+
+if (daysPassed >= 3) {
+    levelFromTime = (int) ((daysPassed - 3) * levelingSettings.levelsPerDay());
+
+    // Alerta cinematográfica en pantalla al iniciar el Día 3
+    server.getPlayerList().getPlayers().forEach(serverPlayer -> {
+        if (daysPassed == 3 && gameTime % 24000 < 100) {
+            server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), 
+                "title " + serverPlayer.getGameProfile().getName() + " title {\"text\":\"EL MUNDO SE HACE MÁS DIFÍCIL\",\"bold\":true,\"color\":\"dark_red\"}");
+            server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), 
+                "playsound minecraft:entity.wither.spawn ambient " + serverPlayer.getGameProfile().getName() + " ~ ~ ~ 1 0.5");
+        }
+    });
+}
+
+        // Aplicamos multiplicadores extras del autor base
+        monsterLevel = Math.abs(monsterLevel);
+        monsterLevel += WorldLevelingData.get((ServerLevel) entity.level()).getLevelBonus();
+        
+        GlobalLevelingData globalLevelingData = GlobalLevelingData.get(server);
+        monsterLevel += globalLevelingData.getLevelBonus();
+
+        // --- EL TOPE DEFINITIVO (Límite absoluto de 100 niveles) ---
+        int maxLevel = levelingSettings.maxLevel();
+        if (maxLevel > 0) monsterLevel = Math.min(monsterLevel, 100);
+
+        return monsterLevel;
     }
-    int monsterLevel = levelingSettings.startingLevel() - 1;
-    int maxLevel = levelingSettings.maxLevel();
-    monsterLevel += (int) (levelingSettings.levelsPerDistance() * distance);
-    monsterLevel += (int) Math.pow(distance, distance * levelingSettings.levelPowerPerDistance()) - 1;
-    if (entity.getY() < 64) {
-      double deepness = 64 - entity.getY();
-      monsterLevel += (int) (levelingSettings.levelsPerDeepness() * deepness);
-      monsterLevel +=
-          (int) Math.pow(deepness, deepness * levelingSettings.levelPowerPerDeepness()) - 1;
-    }
-    int levelBonus = levelingSettings.randomLevelBonus() + 1;
-    if (levelBonus > 0) monsterLevel += entity.getRandom().nextInt(levelBonus);
-    monsterLevel = Math.abs(monsterLevel);
-    monsterLevel += WorldLevelingData.get((ServerLevel) entity.level).getLevelBonus();
-    if (maxLevel > 0) monsterLevel = Math.min(monsterLevel, maxLevel - 1);
-    GlobalLevelingData globalLevelingData = GlobalLevelingData.get(server);
-    monsterLevel += globalLevelingData.getLevelBonus();
-    return monsterLevel;
-  }
 
   @SubscribeEvent
   public static void applyDamageBonus(LivingHurtEvent event) {
