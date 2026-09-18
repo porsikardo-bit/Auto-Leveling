@@ -196,7 +196,7 @@ public class MobsLevelingEvents {
     return canHaveLevel(entity);
   }
 
-    private static int createLevelForEntity(LivingEntity entity, double distance) {
+        private static int createLevelForEntity(LivingEntity entity, double distance) {
         MinecraftServer server = entity.getServer();
         if (server == null) return 0;
         LevelingSettings levelingSettings = EntitiesLevelingSettingsReloader.getSettingsForEntity(entity.getType());
@@ -218,13 +218,13 @@ public class MobsLevelingEvents {
             if (!serverPlayer.getPersistentData().contains(tag) || serverPlayer.getPersistentData().getInt(tag) != playerSector) {
                 serverPlayer.getPersistentData().putInt(tag, playerSector);
                 
-                // Comando para lanzar el título en la parte superior (Actionbar / Title con tiempos configurados)
+                // Comando para lanzar el título en la parte superior (Actionbar)
                 server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), 
                     "title " + serverPlayer.getGameProfile().getName() + " times 10 40 10");
                 server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), 
                     "title " + serverPlayer.getGameProfile().getName() + " actionbar [\"\",{\"text\":\"  Has entrado a la \",\"color\":\"gold\"},{\"text\":\"ZONA " + playerSector + "\",\"bold\":true,\"color\":\"dark_red\"},{\"text\":\"  \",\"color\":\"gold\"}]");
                 
-                // Sonido épico de transición de zona (Estilo campana/logro)
+                // Sonido épico de transición de zona
                 server.getCommands().performPrefixedCommand(server.createCommandSourceStack(), 
                     "playsound minecraft:ui.toast.challenge_complete ambient " + serverPlayer.getGameProfile().getName() + " ~ ~ ~ 1 1");
             }
